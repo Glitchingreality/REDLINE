@@ -34,7 +34,7 @@ st.set_page_config(page_title="Redline Threat Hunter", layout="wide")
 st.markdown(
     """
     <h1 style='text-align:center; font-size:48px; color:white;'>
-        ❗<span style='color:white; text-decoration: line-through red;'>REDLINE</span>❗ Threat Hunting Engine
+        ❗<span style='color:white; text-decoration: line-through red;'>REDLINE❗ Threat Hunting Engine</span>
         <sup><span title="Developed by Chance Bowers">ℹ️</span></sup>
     </h1>
     """,
@@ -204,6 +204,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
