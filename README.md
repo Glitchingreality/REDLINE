@@ -47,7 +47,7 @@ Install dependencies:
 
 pip install -r requirements.txt
 
-
+<br>
 <h2>
 📝 Usage
 </h2>
@@ -71,6 +71,7 @@ Output includes:
 - Execution timeline with suspicious activity highlights
 
 - Narrative summary of key behaviors and escalation points
+<br>
 
 🖥️ Sample Output<br>
 ```
