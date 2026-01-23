@@ -67,12 +67,12 @@ st.markdown("### Timeline Controls")
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
-    if st.button("🔼 Expand All"):
+    if st.button("🔽 Expand All"):
         st.session_state.expand_all = True
         st.session_state.collapse_all = False
 
 with c2:
-    if st.button("🔽 Collapse All"):
+    if st.button("🔼 Collapse All"):
         st.session_state.collapse_all = True
         st.session_state.expand_all = False
 
@@ -85,7 +85,7 @@ with c3:
 
 with c4:
     st.session_state.show_red = st.toggle(
-        "🔴 Redlines",
+        "🔴 Red Line",
         value=st.session_state.show_red,
         help="Toggle high-risk escalation activity",
     )
@@ -217,4 +217,5 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
