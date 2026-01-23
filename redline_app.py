@@ -26,6 +26,58 @@ from redline import (
 # STATE
 # -------------------------
 TIMELINE = defaultdict(list)
+# -------------------------
+# GENERATE NARRATIVE
+# -------------------------
+def generate_narrative(user, events):
+    if not events:
+        return None
+
+    events = sorted(events, key=lambda e: e["time"] or datetime.min)
+
+    start_time = events[0]["time"]
+    end_time = events[-1]["time"]
+
+    escalation = next((e for e in events if e["score"] >= 8), None)
+
+    key_findings = set()
+    for e in events:
+        for f in e["findings"]:
+            if any(k in f.lower() for k in ["lolbin", "encoded", "network", "signal"]):
+                key_findings.add(f)
+
+    summary = []
+    summary.append(
+        f"User **{user}** exhibited suspicious activity beginning at "
+        f"**{start_time.strftime('%H:%M:%S') if start_time else 'UNKNOWN'}**."
+    )
+
+    summary.append(
+        f"The activity progressed through **{len(events)} notable events**, "
+        f"showing increasing behavioral risk over time."
+    )
+
+    if escalation:
+        summary.append(
+            f"An escalation point was detected at "
+            f"**{escalation['process']}** "
+            f"around **{escalation['time'].strftime('%H:%M:%S') if escalation['time'] else 'UNKNOWN'}**, "
+            f"indicating probable malicious intent."
+        )
+    else:
+        summary.append(
+            "No single high-confidence escalation point was observed, "
+            "but multiple low-to-medium risk indicators were present."
+        )
+
+    if key_findings:
+        summary.append(
+            "Key observed behaviors include: "
+            + "; ".join(list(key_findings)[:5])
+            + "."
+        )
+
+    return " ".join(summary)
 
 # -------------------------
 # UI SETUP
@@ -103,6 +155,12 @@ if uploaded_file:
 # -------------------------
 for user, events in TIMELINE.items():
     st.markdown(f"## Execution Timeline for **{user}**")
+    narrative = generate_narrative(user, events)
+
+if narrative:
+    with st.expander("🧠 Narrative Summary", expanded=True):
+        st.markdown(narrative)
+
 
     for e in sorted(events, key=lambda x: x["time"] or datetime.min):
         is_red = e["score"] >= 5
@@ -193,6 +251,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
