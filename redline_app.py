@@ -87,7 +87,7 @@ for user, events in TIMELINE.items():
             st.session_state[f"{user}_filter_mode"]["all"] = False
             st.session_state[f"{user}_filter_mode"]["red"] = False
     with col3:
-        if st.button(f"🔴 Redlines ({user})"):
+        if st.button(f"🔴 Red Line ({user})"):
             st.session_state[f"{user}_filter_mode"]["red"] = not st.session_state[f"{user}_filter_mode"]["red"]
             st.session_state[f"{user}_filter_mode"]["all"] = False
             st.session_state[f"{user}_filter_mode"]["green"] = False
@@ -142,6 +142,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv"
     )
+
 
 
 
