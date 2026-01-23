@@ -1,66 +1,100 @@
 import streamlit as st
-from datetime import datetime
 from collections import defaultdict
-from redline import process_log, TIMELINE, parse_log_line, parse_timestamp, severity_color, threatlocker_recommendation, explain_decision, print_timeline
+from datetime import datetime
+import re
+import io
 
-st.set_page_config(
-    page_title="Redline Threat Hunter",
-    page_icon="🛑",
-    layout="wide"
+# -------------------------
+# IMPORT YOUR ANALYSIS MODULE
+# -------------------------
+from redline_core import (
+    parse_log_line,
+    parse_timestamp,
+    analyze_line,
+    threatlocker_recommendation,
+    explain_decision,
+    severity_color,
 )
 
-st.title("🛑 Redline Threat Hunter")
-st.markdown("""
-Upload your log file and let Redline analyze suspicious behaviors.
-""")
+# -------------------------
+# STATE
+# -------------------------
+TIMELINE = defaultdict(list)
 
-uploaded_file = st.file_uploader("Choose a log file", type=["txt", "csv", "log"])
+# -------------------------
+# UI SETUP
+# -------------------------
+st.set_page_config(page_title="Redline Threat Hunter", layout="wide")
+st.title("🚨 Redline Threat Hunter")
+st.markdown("Analyze log files for suspicious activity with execution chains, LOLBIN detection, and obfuscation indicators.")
 
-if uploaded_file is not None:
-    st.text("Processing log file...")
+# -------------------------
+# FILE UPLOAD
+# -------------------------
+uploaded_file = st.file_uploader("Upload a log file", type=["csv", "txt"])
+if uploaded_file:
+    raw_lines = uploaded_file.read().decode("utf-8").splitlines()
 
-    # Save the uploaded file to a temporary location
-    temp_path = "temp_uploaded_log.txt"
-    with open(temp_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+    for lineno, line in enumerate(raw_lines, 1):
+        context = parse_log_line(line)
+        score, findings = analyze_line(line, context)
+        recommendation = threatlocker_recommendation(score, findings)
+        explanation = explain_decision(score, findings, context)
 
-    # Clear previous timeline
-    TIMELINE.clear()
+        TIMELINE[context["user"]].append({
+            "time": parse_timestamp(context["timestamp"]),
+            "process": context["process"],
+            "parent": context["parent"],
+            "action": context["action"],
+            "path": context["path"],
+            "score": score,
+            "findings": findings,
+            "policy": context["policy"],
+            "recommendation": recommendation,
+            "explanation": explanation
+        })
 
-    # Process the uploaded log
-    process_log(temp_path)
+    st.success(f"✅ Processed {len(raw_lines)} log lines!")
 
-    st.success("Analysis complete!")
+# -------------------------
+# TIMELINE VISUALIZATION
+# -------------------------
+for user, events in TIMELINE.items():
+    st.markdown(f"## Execution Timeline for **{user}**")
 
-    # Display per-user timeline and narrative
-    for user in TIMELINE:
-        st.markdown(f"### Execution Timeline for **{user}**")
-
-        events = sorted(TIMELINE[user], key=lambda e: e["time"] or datetime.min)
-        escalation_detected = False
-        narrative_findings = []
-
-        for e in events:
-            t = e["time"].strftime("%H:%M:%S") if e["time"] else "UNKNOWN"
-            color = severity_color(e["score"])
-            line_str = f"[{t}] {e['parent']} → {e['process']} | {e['action']} | Score={e['score']}"
-            st.markdown(f"<span style='color:{color};'>{line_str}</span>", unsafe_allow_html=True)
-            
+    for e in sorted(events, key=lambda x: x["time"] or datetime.min):
+        color = "#ff0000" if e["score"] >= 8 else "#ffa500" if e["score"] >= 5 else "#00bcd4" if e["score"] >= 3 else "#4caf50"
+        with st.expander(f"{e['time'].strftime('%H:%M:%S') if e['time'] else 'UNKNOWN'} | {e['parent']} → {e['process']} | Score={e['score']} | {e['recommendation']}"):
+            st.markdown(f"<span style='color:{color}; font-weight:bold'>Action: {e['action']}</span>", unsafe_allow_html=True)
+            st.markdown(f"<span style='color:{color}'>Reason: {e['explanation']}</span>", unsafe_allow_html=True)
             for f in e["findings"]:
-                narrative_findings.append(f)
-                st.markdown(f"<span style='color:{color};'>• {f}</span>", unsafe_allow_html=True)
+                st.markdown(f"- {f}")
 
-            if e["score"] >= 5:
-                escalation_detected = True
+# -------------------------
+# SUMMARY METRICS
+# -------------------------
+if TIMELINE:
+    total_events = sum(len(v) for v in TIMELINE.values())
+    total_high_risk = sum(1 for events in TIMELINE.values() for e in events if e["score"] >= 8)
+    total_users = len(TIMELINE)
+    st.sidebar.markdown("## 📊 Summary")
+    st.sidebar.metric("Total Users", total_users)
+    st.sidebar.metric("Total Events", total_events)
+    st.sidebar.metric("High-Risk Events", total_high_risk)
 
-        # Narrative summary
-        if events:
-            first_time = events[0]["time"].strftime("%H:%M:%S") if events[0]["time"] else "UNKNOWN"
-            last_time = events[-1]["time"].strftime("%H:%M:%S") if events[-1]["time"] else "UNKNOWN"
-            st.markdown(f"**Narrative Summary:**\nUser '{user}' exhibited suspicious behavior starting at {first_time}, ending at {last_time}. Key behaviors include: {', '.join(narrative_findings[:10])}...")
+# -------------------------
+# DOWNLOAD REPORT
+# -------------------------
+if TIMELINE:
+    output = io.StringIO()
+    output.write("timestamp,user,process,parent,action,path,score,recommendation,explanation,policy\n")
+    for user, events in TIMELINE.items():
+        for e in events:
+            output.write(f"{e['time']},{user},{e['process']},{e['parent']},{e['action']},{e['path']},{e['score']},{e['recommendation']},{e['explanation']},{e['policy']}\n")
 
-        if escalation_detected:
-            pivot_event = next((e for e in events if e["score"] >= 5), None)
-            if pivot_event:
-                st.markdown(f"⚠ **Escalation detected at {pivot_event['process']} ({pivot_event['time'].strftime('%H:%M:%S') if pivot_event['time'] else 'UNKNOWN'})**")
-
+    st.download_button(
+        label="📥 Download Analysis Report",
+        data=output.getvalue(),
+        file_name="redline_analysis.csv",
+        mime="text/csv"
+    )
