@@ -187,7 +187,8 @@ if TIMELINE:
     st.sidebar.metric("Users", len(TIMELINE))
     st.sidebar.metric("Total Events", total_events)
     st.sidebar.metric("High-Risk Events", high_risk)
-    if TIMELINE:
+    
+if TIMELINE:
     output = io.StringIO()
     output.write(
         "timestamp,user,process,parent,action,path,score,recommendation,explanation,policy\n"
@@ -230,6 +231,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
