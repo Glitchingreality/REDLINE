@@ -3,6 +3,13 @@
 <br><br>
 Redline is an open-source log analysis engine designed to identify suspicious behaviors, potential malware activity, and anomalous execution chains from system/process logs. It uses behavioral heuristics, LOLBin detection, and execution correlation to provide clear recommendations and English-language narratives of security events.
 <br><br>
+<p align="center">
+  <a href="https://redline-threat-hunter.streamlit.app/">
+    <strong>
+Click here to use REDLINE Online</strong>
+  </a>
+</p>
+<br><br>
 <h2>⤹ <u>Features ⤸ </h2></u>
 
 <h4>
