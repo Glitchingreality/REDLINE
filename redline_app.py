@@ -54,12 +54,18 @@ with c2:
         st.session_state.expand_all = False
 
 with c3:
-    if st.button("🟢 Green Line" if st.session_state.show_green else "⚪ Green Line"):
-        st.session_state.show_green = not st.session_state.show_green
+    st.session_state.show_green = st.toggle(
+        "🟢 Green Line",
+        value=st.session_state.show_green,
+        help="Toggle low-risk baseline activity",
+    )
 
 with c4:
-    if st.button("🔴 Redlines" if st.session_state.show_red else "⚪ Redlines"):
-        st.session_state.show_red = not st.session_state.show_red
+    st.session_state.show_red = st.toggle(
+        "🔴 Redlines",
+        value=st.session_state.show_red,
+        help="Toggle high-risk escalation activity",
+    )
 
 st.divider()
 
@@ -187,3 +193,4 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
