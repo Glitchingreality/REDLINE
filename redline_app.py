@@ -31,7 +31,15 @@ TIMELINE = defaultdict(list)
 # UI SETUP
 # -------------------------
 st.set_page_config(page_title="Redline Threat Hunter", layout="wide")
-st.title("❗Redline❗ Threat Hunting Engine")
+st.markdown(
+    """
+    <h1>🚨 Redline Threat Hunter 
+    <span title="Developed by Chance Bowers" style="font-size:0.6em; cursor:help;">ℹ️</span>
+    </h1>
+    """,
+    unsafe_allow_html=True
+)
+
 st.markdown(
     "Analyze log files for suspicious activity using execution chains, LOLBIN detection, and behavioral correlation."
 )
@@ -194,5 +202,6 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
