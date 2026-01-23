@@ -44,8 +44,14 @@ st.markdown(
 
 
 st.markdown(
-    "Analyze log files for suspicious activity using execution chains, LOLBIN detection, and behavioral correlation."
+    """
+    <div style='text-align:center;'>
+        Analyze log files for suspicious activity using execution chains, LOLBIN detection, and behavioral correlation.
+    </div>
+    """,
+    unsafe_allow_html=True
 )
+
 
 # -------------------------
 # GLOBAL CONTROLS
@@ -205,6 +211,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
