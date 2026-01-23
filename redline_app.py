@@ -7,7 +7,7 @@ import io
 # -------------------------
 # IMPORT YOUR ANALYSIS MODULE
 # -------------------------
-from redline_core import (
+from redline import (
     parse_log_line,
     parse_timestamp,
     analyze_line,
@@ -98,3 +98,4 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv"
     )
+
