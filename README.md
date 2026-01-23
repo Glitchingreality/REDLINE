@@ -1,5 +1,5 @@
 <h1>
-❗Redline❗Threat Hunter: Behavioral Log Analysis Engine🛡️</h1>
+❗Redline❗<br>Threat Hunter: Behavioral Log Analysis Engine🛡️</h1>
 <br><br>
 Redline is an open-source log analysis engine designed to identify suspicious behaviors, potential malware activity, and anomalous execution chains from system/process logs. It uses behavioral heuristics, LOLBin detection, and execution correlation to provide clear recommendations and English-language narratives of security events.
 <br><br>
