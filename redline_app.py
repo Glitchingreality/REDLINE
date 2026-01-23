@@ -181,22 +181,12 @@ st.session_state.collapse_all = False
 # -------------------------
 if TIMELINE:
     total_events = sum(len(v) for v in TIMELINE.values())
-    total_high_risk = sum(1 for events in TIMELINE.values() for e in events if e["score"] >= 8)
-    total_users = len(TIMELINE)
-    
+    high_risk = sum(1 for v in TIMELINE.values() for e in v if e["score"] >= 8)
+
     st.sidebar.markdown("## 📊 Summary")
-    st.sidebar.metric("Total Users", total_users)
+    st.sidebar.metric("Users", len(TIMELINE))
     st.sidebar.metric("Total Events", total_events)
-    st.sidebar.metric("High-Risk Events", total_high_risk)
-    
-    # Additional download button in sidebar under metrics
-    st.sidebar.markdown("### 📥 Download Report")
-    st.sidebar.download_button(
-        label="Download Analysis Report",
-        data=output.getvalue(),
-        file_name="redline_analysis.csv",
-        mime="text/csv"
-    )
+    st.sidebar.metric("High-Risk Events", high_risk)
 # -------------------------
 # DOWNLOAD REPORT
 # -------------------------
@@ -220,6 +210,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
