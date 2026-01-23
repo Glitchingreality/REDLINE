@@ -12,25 +12,6 @@ if "show_green" not in st.session_state:
 
 if "show_red" not in st.session_state:
     st.session_state.show_red = True
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    if st.button(
-        "🔽 Collapse All" if st.session_state.expand_all else "🔼 Expand All"
-    ):
-        st.session_state.expand_all = not st.session_state.expand_all
-
-with col2:
-    if st.button(
-        "🟢 Green Line ON" if st.session_state.show_green else "⚪ Green Line OFF"
-    ):
-        st.session_state.show_green = not st.session_state.show_green
-
-with col3:
-    if st.button(
-        "🔴 Redlines ON" if st.session_state.show_red else "⚪ Redlines OFF"
-    ):
-        st.session_state.show_red = not st.session_state.show_red
 
 # -------------------------
 # IMPORT YOUR ANALYSIS MODULE
