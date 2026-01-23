@@ -31,15 +31,7 @@ TIMELINE = defaultdict(list)
 # UI SETUP
 # -------------------------
 st.set_page_config(page_title="Redline Threat Hunter", layout="wide")
-st.markdown(
-    """
-    <h1>🚨 Redline Threat Hunter 
-    <span title="Developed by Chance Bowers" style="font-size:0.6em; cursor:help;">ℹ️</span>
-    </h1>
-    """,
-    unsafe_allow_html=True
-)
-
+st.title("❗Redline❗ Threat Hunting Engine")
 st.markdown(
     "Analyze log files for suspicious activity using execution chains, LOLBIN detection, and behavioral correlation."
 )
@@ -70,7 +62,7 @@ with c3:
 
 with c4:
     st.session_state.show_red = st.toggle(
-        "🔴 Red Line",
+        "🔴 Redlines",
         value=st.session_state.show_red,
         help="Toggle high-risk escalation activity",
     )
@@ -202,6 +194,3 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
-
-
-
