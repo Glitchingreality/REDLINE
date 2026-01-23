@@ -86,3 +86,7 @@ Narrative Summary:
 
 ⚠ Escalation detected at certutil.exe (08:53:01)
 ```
+<br><br><br><br><br><br><br><br><br><br><br>
+
+
+# <h1 align="center">"It's Dangerous to go alone! take this..."<br>[☄️🧙🏾‍♂️](https://www.glitchingreality.github.io)</h1>
