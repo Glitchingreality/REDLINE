@@ -6,13 +6,17 @@ import io
 # -------------------------
 # SESSION STATE DEFAULTS
 # -------------------------
-st.session_state.setdefault("expand_all", False)
-st.session_state.setdefault("collapse_all", False)
-st.session_state.setdefault("show_green", True)
-st.session_state.setdefault("show_red", True)
+if "expand_all" not in st.session_state:
+    st.session_state.expand_all = False
+
+if "show_green" not in st.session_state:
+    st.session_state.show_green = True
+
+if "show_red" not in st.session_state:
+    st.session_state.show_red = True
 
 # -------------------------
-# IMPORT ANALYSIS MODULE
+# IMPORT YOUR ANALYSIS MODULE
 # -------------------------
 from redline import (
     parse_log_line,
@@ -20,235 +24,148 @@ from redline import (
     analyze_line,
     threatlocker_recommendation,
     explain_decision,
+    severity_color,
 )
 
 # -------------------------
 # STATE
 # -------------------------
 TIMELINE = defaultdict(list)
-# -------------------------
-# GENERATE NARRATIVE
-# -------------------------
-def generate_narrative(user, events):
-    if not events:
-        return None
-
-    events = sorted(events, key=lambda e: e["time"] or datetime.min)
-
-    start_time = events[0]["time"]
-    end_time = events[-1]["time"]
-
-    escalation = next((e for e in events if e["score"] >= 8), None)
-
-    key_findings = set()
-    for e in events:
-        for f in e["findings"]:
-            if any(k in f.lower() for k in ["lolbin", "encoded", "network", "signal"]):
-                key_findings.add(f)
-
-    summary = []
-    summary.append(
-        f"User **{user}** exhibited suspicious activity beginning at "
-        f"**{start_time.strftime('%H:%M:%S') if start_time else 'UNKNOWN'}**."
-    )
-
-    summary.append(
-        f"The activity progressed through **{len(events)} notable events**, "
-        f"showing increasing behavioral risk over time."
-    )
-
-    if escalation:
-        summary.append(
-            f"An escalation point was detected at "
-            f"**{escalation['process']}** "
-            f"around **{escalation['time'].strftime('%H:%M:%S') if escalation['time'] else 'UNKNOWN'}**, "
-            f"indicating probable malicious intent."
-        )
-    else:
-        summary.append(
-            "No single high-confidence escalation point was observed, "
-            "but multiple low-to-medium risk indicators were present."
-        )
-
-    if key_findings:
-        summary.append(
-            "Key observed behaviors include: "
-            + "; ".join(list(key_findings)[:5])
-            + "."
-        )
-
-    return " ".join(summary)
 
 # -------------------------
 # UI SETUP
 # -------------------------
 st.set_page_config(page_title="Redline Threat Hunter", layout="wide")
-st.title("❗Redline❗ Threat Hunting Engine  ")
+st.title("🚨 Redline Threat Hunter")
 st.markdown(
-    "Analyze log files for suspicious activity using execution chains, LOLBIN detection, and behavioral correlation."
+    "Analyze log files for suspicious activity with execution chains, LOLBIN detection, "
+    "and obfuscation indicators."
 )
 
 # -------------------------
-# GLOBAL CONTROLS
+# TOP-LEVEL CONTROLS
 # -------------------------
-st.markdown("### Timeline Controls")
-
-c1, c2, c3, c4 = st.columns(4)
-
-with c1:
-    if st.button("🔼 Expand All"):
-        st.session_state.expand_all = True
-        st.session_state.collapse_all = False
-
-with c2:
-    if st.button("🔽 Collapse All"):
-        st.session_state.collapse_all = True
-        st.session_state.expand_all = False
-
-with c3:
-    st.session_state.show_green = st.toggle(
-        "🟢 Green Line",
-        value=st.session_state.show_green,
-        help="Toggle low-risk baseline activity",
-    )
-
-with c4:
-    st.session_state.show_red = st.toggle(
-        "🔴 Red Line",
-        value=st.session_state.show_red,
-        help="Toggle high-risk escalation activity",
-    )
-
-st.divider()
+col1, col2, col3 = st.columns(3)
+with col1:
+    if st.button("🔽 Expand All" if not st.session_state.expand_all else "🔼 Collapse All"):
+        st.session_state.expand_all = not st.session_state.expand_all
+with col2:
+    if st.button("🟢 Green Line ON" if st.session_state.show_green else "⚪ Green Line OFF"):
+        st.session_state.show_green = not st.session_state.show_green
+with col3:
+    if st.button("🔴 Redlines ON" if st.session_state.show_red else "⚪ Redlines OFF"):
+        st.session_state.show_red = not st.session_state.show_red
 
 # -------------------------
 # FILE UPLOAD
 # -------------------------
 uploaded_file = st.file_uploader("Upload a log file", type=["csv", "txt"])
-
 if uploaded_file:
     raw_lines = uploaded_file.read().decode("utf-8").splitlines()
-
-    for line in raw_lines:
+    for lineno, line in enumerate(raw_lines, 1):
         context = parse_log_line(line)
         score, findings = analyze_line(line, context)
+        recommendation = threatlocker_recommendation(score, findings)
+        explanation = explain_decision(score, findings, context)
 
-        TIMELINE[context["user"]].append(
-            {
-                "time": parse_timestamp(context["timestamp"]),
-                "process": context["process"],
-                "parent": context["parent"],
-                "action": context["action"],
-                "path": context["path"],
-                "score": score,
-                "findings": findings,
-                "recommendation": threatlocker_recommendation(score, findings),
-                "explanation": explain_decision(score, findings, context),
-                "policy": context["policy"],
-            }
-        )
+        TIMELINE[context["user"]].append({
+            "time": parse_timestamp(context["timestamp"]),
+            "process": context["process"],
+            "parent": context["parent"],
+            "action": context["action"],
+            "path": context["path"],
+            "score": score,
+            "findings": findings,
+            "policy": context["policy"],
+            "recommendation": recommendation,
+            "explanation": explanation
+        })
 
-    st.success(f"✅ Processed {len(raw_lines)} log lines")
+    st.success(f"✅ Processed {len(raw_lines)} log lines!")
 
 # -------------------------
-# TIMELINE RENDER
+# TIMELINE VISUALIZATION
 # -------------------------
 for user, events in TIMELINE.items():
     st.markdown(f"## Execution Timeline for **{user}**")
 
-    # Narrative
-    narrative = generate_narrative(user, events)
-    if narrative:
-        with st.expander("🧠 Narrative Summary", expanded=True):
-            st.markdown(narrative)
+    # Initialize session state for per-entry expanders
+    for lineno, e in enumerate(sorted(events, key=lambda x: x["time"] or datetime.min)):
+        entry_key = f"{user}_{lineno}_{e['process']}_{e['time']}"
+        if entry_key not in st.session_state:
+            # Default expanded if top-level expand_all is True
+            st.session_state[entry_key] = st.session_state.expand_all
 
-    # User-specific filter states
-    if f"{user}_filter_mode" not in st.session_state:
-        st.session_state[f"{user}_filter_mode"] = {"all": False, "green": True, "red": True}
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button(f"🔽 Expand All ({user})", key=f"{user}_all_btn"):
-            st.session_state[f"{user}_filter_mode"]["all"] = not st.session_state[f"{user}_filter_mode"]["all"]
-            st.session_state[f"{user}_filter_mode"]["green"] = True
-            st.session_state[f"{user}_filter_mode"]["red"] = True
-    with col2:
-        if st.button(f"🟢 Green Line ({user})", key=f"{user}_green_btn"):
-            st.session_state[f"{user}_filter_mode"]["green"] = not st.session_state[f"{user}_filter_mode"]["green"]
-            st.session_state[f"{user}_filter_mode"]["all"] = False
-    with col3:
-        if st.button(f"🔴 Red Line ({user})", key=f"{user}_red_btn"):
-            st.session_state[f"{user}_filter_mode"]["red"] = not st.session_state[f"{user}_filter_mode"]["red"]
-            st.session_state[f"{user}_filter_mode"]["all"] = False
-
-    mode_state = st.session_state[f"{user}_filter_mode"]
-
-    # Render timeline events
-    for e in sorted(events, key=lambda x: x["time"] or datetime.min):
+    for lineno, e in enumerate(sorted(events, key=lambda x: x["time"] or datetime.min)):
+        entry_key = f"{user}_{lineno}_{e['process']}_{e['time']}"
         score = e["score"]
         color = "#ff0000" if score >= 8 else "#ffa500" if score >= 5 else "#00bcd4" if score >= 3 else "#4caf50"
 
-        # Apply filters
-        if not mode_state["red"] and score >= 5:
-            continue
-        if not mode_state["green"] and score < 5:
-            continue
+        # Visibility filter based on top-level buttons
+        visible = True
+        if not st.session_state.show_green and score < 5:
+            visible = False
+        if not st.session_state.show_red and score >= 5:
+            visible = False
 
-        expanded_default = mode_state["all"]  # Expand all if 'all' active
-        with st.expander(f"{e['time'].strftime('%H:%M:%S') if e['time'] else 'UNKNOWN'} | {e['parent']} → {e['process']} | Score={score} | {e.get('recommendation','')}", expanded=expanded_default):
-            st.markdown(f"<span style='color:{color}; font-weight:bold'>Action: {e['action']}</span>", unsafe_allow_html=True)
-            st.markdown(f"<span style='color:{color}'>Reason: {e['explanation']}</span>", unsafe_allow_html=True)
-            for f in e["findings"]:
-                st.markdown(f"- {f}")
-
+        if visible:
+            with st.expander(
+                f"{e['time'].strftime('%H:%M:%S') if e['time'] else 'UNKNOWN'} | "
+                f"{e['parent']} → {e['process']} | Score={score} | {e.get('recommendation','')}",
+                expanded=st.session_state[entry_key],
+                key=entry_key
+            ):
+                st.markdown(f"<span style='color:{color}; font-weight:bold'>Action: {e['action']}</span>", unsafe_allow_html=True)
+                st.markdown(f"<span style='color:{color}'>Reason: {e['explanation']}</span>", unsafe_allow_html=True)
+                for f in e["findings"]:
+                    st.markdown(f"- {f}")
 
 # -------------------------
-# RESET COLLAPSE (MOMENTARY ACTION)
+# NARRATIVE SUMMARY
 # -------------------------
-st.session_state.collapse_all = False
+st.markdown("## 🧠 Narrative Summary")
+for user, events in TIMELINE.items():
+    if not events:
+        continue
+    events_sorted = sorted(events, key=lambda x: x["time"] or datetime.min)
+    start_time = events_sorted[0]["time"].strftime("%H:%M:%S") if events_sorted[0]["time"] else "UNKNOWN"
+    escalation_event = next((e for e in events_sorted if e["score"] >= 5), events_sorted[0])
+    behaviors = set()
+    for e in events_sorted:
+        behaviors.update(e["findings"])
+    behaviors_list = "; ".join(behaviors)
+    st.markdown(
+        f"**User {user}** exhibited suspicious activity beginning at {start_time}. "
+        f"The activity progressed through {len(events_sorted)} notable events, showing increasing behavioral risk over time. "
+        f"An escalation point was detected at {escalation_event['process']} around "
+        f"{escalation_event['time'].strftime('%H:%M:%S') if escalation_event['time'] else 'UNKNOWN'}, indicating probable malicious intent. "
+        f"Key observed behaviors include: {behaviors_list}."
+    )
 
 # -------------------------
-# SIDEBAR METRICS
+# SUMMARY METRICS
 # -------------------------
 if TIMELINE:
     total_events = sum(len(v) for v in TIMELINE.values())
-    high_risk = sum(1 for v in TIMELINE.values() for e in v if e["score"] >= 8)
-
+    total_high_risk = sum(1 for events in TIMELINE.values() for e in events if e["score"] >= 8)
+    total_users = len(TIMELINE)
     st.sidebar.markdown("## 📊 Summary")
-    st.sidebar.metric("Users", len(TIMELINE))
+    st.sidebar.metric("Total Users", total_users)
     st.sidebar.metric("Total Events", total_events)
-    st.sidebar.metric("High-Risk Events", high_risk)
+    st.sidebar.metric("High-Risk Events", total_high_risk)
 
 # -------------------------
 # DOWNLOAD REPORT
 # -------------------------
 if TIMELINE:
     output = io.StringIO()
-    output.write(
-        "timestamp,user,process,parent,action,path,score,recommendation,explanation,policy\n"
-    )
-
+    output.write("timestamp,user,process,parent,action,path,score,recommendation,explanation,policy\n")
     for user, events in TIMELINE.items():
         for e in events:
-            output.write(
-                f"{e['time']},{user},{e['process']},{e['parent']},{e['action']},"
-                f"{e['path']},{e['score']},{e['recommendation']},"
-                f"{e['explanation']},{e['policy']}\n"
-            )
-
+            output.write(f"{e['time']},{user},{e['process']},{e['parent']},{e['action']},{e['path']},{e['score']},{e['recommendation']},{e['explanation']},{e['policy']}\n")
     st.download_button(
-        "📥 Download Analysis Report",
+        label="📥 Download Analysis Report",
         data=output.getvalue(),
         file_name="redline_analysis.csv",
-        mime="text/csv",
+        mime="text/csv"
     )
-
-
-
-
-
-
-
-
-
-
