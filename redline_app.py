@@ -187,6 +187,26 @@ if TIMELINE:
     st.sidebar.metric("Users", len(TIMELINE))
     st.sidebar.metric("Total Events", total_events)
     st.sidebar.metric("High-Risk Events", high_risk)
+    if TIMELINE:
+    output = io.StringIO()
+    output.write(
+        "timestamp,user,process,parent,action,path,score,recommendation,explanation,policy\n"
+    )
+
+    for user, events in TIMELINE.items():
+        for e in events:
+            output.write(
+                f"{e['time']},{user},{e['process']},{e['parent']},{e['action']},"
+                f"{e['path']},{e['score']},{e['recommendation']},"
+                f"{e['explanation']},{e['policy']}\n"
+            )
+
+    st.download_button(
+        "📥 Download Analysis Report",
+        data=output.getvalue(),
+        file_name="redline_analysis.csv",
+        mime="text/csv",
+    )
 # -------------------------
 # DOWNLOAD REPORT
 # -------------------------
@@ -210,6 +230,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
