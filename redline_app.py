@@ -201,6 +201,7 @@ for user, events in TIMELINE.items():
             for f in e["findings"]:
                 st.markdown(f"- {f}")
 
+
 # -------------------------
 # RESET COLLAPSE (MOMENTARY ACTION)
 # -------------------------
@@ -241,6 +242,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
