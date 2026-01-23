@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime
 from collections import defaultdict
-from threat_hunter import process_log, TIMELINE, parse_log_line, parse_timestamp, severity_color, threatlocker_recommendation, explain_decision, print_timeline
+from redline import process_log, TIMELINE, parse_log_line, parse_timestamp, severity_color, threatlocker_recommendation, explain_decision, print_timeline
 
 st.set_page_config(
     page_title="Redline Threat Hunter",
@@ -63,3 +63,4 @@ if uploaded_file is not None:
             pivot_event = next((e for e in events if e["score"] >= 5), None)
             if pivot_event:
                 st.markdown(f"⚠ **Escalation detected at {pivot_event['process']} ({pivot_event['time'].strftime('%H:%M:%S') if pivot_event['time'] else 'UNKNOWN'})**")
+
