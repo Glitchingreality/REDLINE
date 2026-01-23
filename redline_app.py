@@ -156,13 +156,13 @@ if uploaded_file:
 for user, events in TIMELINE.items():
     st.markdown(f"## Execution Timeline for **{user}**")
 
-    # Generate narrative per user
+    # Narrative
     narrative = generate_narrative(user, events)
     if narrative:
         with st.expander("🧠 Narrative Summary", expanded=True):
             st.markdown(narrative)
 
-    # Initialize filter state for this user
+    # User-specific filter states
     if f"{user}_filter_mode" not in st.session_state:
         st.session_state[f"{user}_filter_mode"] = {"all": False, "green": True, "red": True}
 
@@ -183,7 +183,7 @@ for user, events in TIMELINE.items():
 
     mode_state = st.session_state[f"{user}_filter_mode"]
 
-    # Render each event according to filter
+    # Render timeline events
     for e in sorted(events, key=lambda x: x["time"] or datetime.min):
         score = e["score"]
         color = "#ff0000" if score >= 8 else "#ffa500" if score >= 5 else "#00bcd4" if score >= 3 else "#4caf50"
@@ -193,6 +193,13 @@ for user, events in TIMELINE.items():
             continue
         if not mode_state["green"] and score < 5:
             continue
+
+        expanded_default = mode_state["all"]  # Expand all if 'all' active
+        with st.expander(f"{e['time'].strftime('%H:%M:%S') if e['time'] else 'UNKNOWN'} | {e['parent']} → {e['process']} | Score={score} | {e.get('recommendation','')}", expanded=expanded_default):
+            st.markdown(f"<span style='color:{color}; font-weight:bold'>Action: {e['action']}</span>", unsafe_allow_html=True)
+            st.markdown(f"<span style='color:{color}'>Reason: {e['explanation']}</span>", unsafe_allow_html=True)
+            for f in e["findings"]:
+                st.markdown(f"- {f}")
 
 # -------------------------
 # RESET COLLAPSE (MOMENTARY ACTION)
@@ -234,6 +241,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
