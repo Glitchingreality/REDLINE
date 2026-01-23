@@ -33,8 +33,8 @@ TIMELINE = defaultdict(list)
 st.set_page_config(page_title="Redline Threat Hunter", layout="wide")
 st.markdown(
     """
-    <h1 style='text-align:center; font-size:48px;'>
-        ❗<span style='color:red; text-decoration: line-through;'>REDLINE</span>❗ Threat Hunting Engine
+    <h1 style='text-align:center; font-size:48px; color:white;'>
+        ❗<span style='color:white; text-decoration: line-through red;'>REDLINE</span>❗ Threat Hunting Engine
         <sup><span title="Developed by Chance Bowers">ℹ️</span></sup>
     </h1>
     """,
@@ -204,6 +204,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
