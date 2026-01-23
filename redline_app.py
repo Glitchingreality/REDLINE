@@ -57,14 +57,38 @@ if uploaded_file:
     st.success(f"✅ Processed {len(raw_lines)} log lines!")
 
 # -------------------------
-# TIMELINE VISUALIZATION
+# TIMELINE VISUALIZATION WITH EXPAND CONTROLS
 # -------------------------
 for user, events in TIMELINE.items():
     st.markdown(f"## Execution Timeline for **{user}**")
 
+    # Initialize session state for expand toggles
+    if f"{user}_expand_mode" not in st.session_state:
+        st.session_state[f"{user}_expand_mode"] = "all"
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button(f"🔽 Expand All ({user})"):
+            st.session_state[f"{user}_expand_mode"] = "all"
+    with col2:
+        if st.button(f"🟢 Expand Green ({user})"):
+            st.session_state[f"{user}_expand_mode"] = "green"
+    with col3:
+        if st.button(f"🔴 Expand Red ({user})"):
+            st.session_state[f"{user}_expand_mode"] = "red"
+
+    # Render events based on expand mode
     for e in sorted(events, key=lambda x: x["time"] or datetime.min):
         color = "#ff0000" if e["score"] >= 8 else "#ffa500" if e["score"] >= 5 else "#00bcd4" if e["score"] >= 3 else "#4caf50"
-        with st.expander(f"{e['time'].strftime('%H:%M:%S') if e['time'] else 'UNKNOWN'} | {e['parent']} → {e['process']} | Score={e['score']} | {e['recommendation']}"):
+
+        # Determine visibility based on mode
+        mode = st.session_state[f"{user}_expand_mode"]
+        if mode == "red" and e["score"] < 5:
+            continue
+        if mode == "green" and e["score"] >= 5:
+            continue
+
+        with st.expander(f"{e['time'].strftime('%H:%M:%S') if e['time'] else 'UNKNOWN'} | {e['parent']} → {e['process']} | Score={e['score']} | {e['recommendation']}", expanded=(mode=="all")):
             st.markdown(f"<span style='color:{color}; font-weight:bold'>Action: {e['action']}</span>", unsafe_allow_html=True)
             st.markdown(f"<span style='color:{color}'>Reason: {e['explanation']}</span>", unsafe_allow_html=True)
             for f in e["findings"]:
@@ -98,4 +122,5 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv"
     )
+
 
