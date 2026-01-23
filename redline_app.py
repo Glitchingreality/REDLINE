@@ -188,7 +188,7 @@ if TIMELINE:
     st.sidebar.metric("Total Events", total_events)
     st.sidebar.metric("High-Risk Events", high_risk)
     
-)
+
 # -------------------------
 # DOWNLOAD REPORT
 # -------------------------
@@ -212,6 +212,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
