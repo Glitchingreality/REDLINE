@@ -155,61 +155,44 @@ if uploaded_file:
 # -------------------------
 for user, events in TIMELINE.items():
     st.markdown(f"## Execution Timeline for **{user}**")
+
+    # Generate narrative per user
     narrative = generate_narrative(user, events)
+    if narrative:
+        with st.expander("🧠 Narrative Summary", expanded=True):
+            st.markdown(narrative)
 
-if narrative:
-    with st.expander("🧠 Narrative Summary", expanded=True):
-        st.markdown(narrative)
+    # Initialize filter state for this user
+    if f"{user}_filter_mode" not in st.session_state:
+        st.session_state[f"{user}_filter_mode"] = {"all": False, "green": True, "red": True}
 
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button(f"🔽 Expand All ({user})", key=f"{user}_all_btn"):
+            st.session_state[f"{user}_filter_mode"]["all"] = not st.session_state[f"{user}_filter_mode"]["all"]
+            st.session_state[f"{user}_filter_mode"]["green"] = True
+            st.session_state[f"{user}_filter_mode"]["red"] = True
+    with col2:
+        if st.button(f"🟢 Green Line ({user})", key=f"{user}_green_btn"):
+            st.session_state[f"{user}_filter_mode"]["green"] = not st.session_state[f"{user}_filter_mode"]["green"]
+            st.session_state[f"{user}_filter_mode"]["all"] = False
+    with col3:
+        if st.button(f"🔴 Red Line ({user})", key=f"{user}_red_btn"):
+            st.session_state[f"{user}_filter_mode"]["red"] = not st.session_state[f"{user}_filter_mode"]["red"]
+            st.session_state[f"{user}_filter_mode"]["all"] = False
 
+    mode_state = st.session_state[f"{user}_filter_mode"]
+
+    # Render each event according to filter
     for e in sorted(events, key=lambda x: x["time"] or datetime.min):
-        is_red = e["score"] >= 5
-        is_green = e["score"] < 5
+        score = e["score"]
+        color = "#ff0000" if score >= 8 else "#ffa500" if score >= 5 else "#00bcd4" if score >= 3 else "#4caf50"
 
-        # FILTER VISIBILITY
-        if is_red and not st.session_state.show_red:
+        # Apply filters
+        if not mode_state["red"] and score >= 5:
             continue
-        if is_green and not st.session_state.show_green:
+        if not mode_state["green"] and score < 5:
             continue
-
-        # EXPANSION LOGIC
-        expanded = False
-        if st.session_state.collapse_all:
-            expanded = False
-        elif st.session_state.expand_all:
-            expanded = True
-        elif is_red and st.session_state.show_red:
-            expanded = True
-        elif is_green and st.session_state.show_green:
-            expanded = False  # visible but collapsed
-
-        color = (
-            "#ff4b4b"
-            if e["score"] >= 8
-            else "#ffa500"
-            if e["score"] >= 5
-            else "#4caf50"
-        )
-
-        label = (
-            f"{e['time'].strftime('%H:%M:%S') if e['time'] else 'UNKNOWN'} | "
-            f"{e['parent']} → {e['process']} | "
-            f"Score={e['score']} | {e['recommendation']}"
-        )
-
-        with st.expander(label, expanded=expanded):
-            st.markdown(
-                f"<span style='color:{color}; font-weight:bold'>Action: {e['action']}</span>",
-                unsafe_allow_html=True,
-            )
-            st.markdown(
-                f"<span style='color:{color}'>Reason: {e['explanation']}</span>",
-                unsafe_allow_html=True,
-            )
-            for f in e["findings"]:
-                st.markdown(f"- {f}")
-
-    st.divider()
 
 # -------------------------
 # RESET COLLAPSE (MOMENTARY ACTION)
@@ -251,6 +234,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
