@@ -48,7 +48,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
+</center>
 
 
 # -------------------------
@@ -209,6 +209,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
