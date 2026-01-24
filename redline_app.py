@@ -33,7 +33,7 @@ TIMELINE = defaultdict(list)
 st.markdown(
     """
     <h1 style='text-align:center; font-size:48px; color:white;'>
-        ❗<span style='color:white; text-decoration: line-through red;'>REDLINE</span>❗ Threat Hunting Engine
+        <span style='color:white; text-decoration: line-through red;'>REDLINE❗ Threat Hunting Engine</span>
         <span style='font-size:16px; vertical-align: super;' title="Developed by Chance Bowers">ℹ️</span>
     </h1>
     """,
@@ -209,6 +209,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
