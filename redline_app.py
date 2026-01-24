@@ -30,25 +30,30 @@ TIMELINE = defaultdict(list)
 # -------------------------
 # UI SETUP
 # -------------------------
-st.markdown(
-    """
-    <h1 style='text-align:center; font-size:48px; color:white;'>
-        <span style='color:white; text-decoration: line-through red;'>REDLINE❗ Threat Hunting Engine</span>
-        <span style='font-size:16px; vertical-align: super;' title="Developed by Chance Bowers">ℹ️</span>
-    </h1>
-    """,
-    unsafe_allow_html=True
-)
+st.set_page_config(page_title="Redline Threat Hunter", layout="wide")
 
+# Centered title with red strike and info bubble
 st.markdown(
     """
-    <div style='text-align:center;'>
-        Analyze log files for suspicious activity using execution chains, LOLBIN detection, and behavioral correlation.
+    <div style='text-align:center; width:100%;'>
+        <h1 style='display:inline-block; font-size:48px; color:white;'>
+            <span style='color:white; text-decoration: line-through red;'>REDLINE❗ Threat Hunting Engine</span>
+            <span style='font-size:16px; vertical-align: super;' title="Developed by Chance Bowers">ℹ️</span>
+        </h1>
     </div>
     """,
     unsafe_allow_html=True
 )
 
+# Centered description under title
+st.markdown(
+    """
+    <div style='text-align:center; width:100%; font-size:18px;'>
+        Analyze log files for suspicious activity using execution chains, LOLBIN detection, and behavioral correlation.
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # -------------------------
@@ -209,6 +214,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
