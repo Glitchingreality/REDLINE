@@ -604,8 +604,11 @@ def process_log(file_path):
         for lineno, line in enumerate(f, 1):
             line = line.strip()
             if not line:
-                continue
-
+                continue    
+# 🔍 STEP 1: Skip INFO / WARN meta lines
+    if line.startswith("[INFO]") or line.startswith("[WARN]"):
+        continue
+        #CONTINUE
             context = parse_log_line(line)
             score, findings = analyze_line(line, context)
             recommendation = threatlocker_recommendation(score, findings)
@@ -645,3 +648,4 @@ if __name__ == "__main__":
 
     print(Fore.BLUE + Style.BRIGHT + "\n=== Threat Hunter Engine Initialized ===\n")
     process_log(sys.argv[1])
+
