@@ -411,7 +411,6 @@ WEIGHTS = {
 
 EXECUTION_CHAINS = defaultdict(list)
 TIMELINE = defaultdict(list)
-
 # =========================
 # HELPERS
 # =========================
@@ -425,14 +424,73 @@ def severity_color(score):
         return Fore.CYAN
     return Fore.GREEN
 
+
 def parse_timestamp(ts):
-    try:
-        return datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-    except Exception:
+    if not ts:
         return None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(ts, fmt)
+        except Exception:
+            continue
+    return None
+
 
 def parse_log_line(line):
+    line = line.strip()
+
+    # -------------------------
+    # STEP 2: HANDLE INFO / WARN LINES
+    # -------------------------
+    if line.startswith("[INFO]"):
+        # Example:
+        # [INFO] time=2026-01-22T08:51:09 user=alice proc=powershell.exe parent=cmd.exe verdict=Blocked reason=EncodedCommand
+        fields = dict(
+            item.split("=", 1)
+            for item in line.replace("[INFO]", "").strip().split()
+            if "=" in item
+        )
+
+        return {
+            "timestamp": fields.get("time"),
+            "user": fields.get("user", "system"),
+            "process": fields.get("proc", "info"),
+            "parent": fields.get("parent", "system"),
+            "path": "",
+            "action": fields.get("verdict", "Info"),
+            "policy": fields.get("reason", ""),
+            "event_type": "info",
+        }
+
+    if line.startswith("[WARN]"):
+        # Example:
+        # [WARN] 2026-01-22 08:52:11 user=dave mshta remote execution attempt blocked
+        tokens = line.replace("[WARN]", "").strip().split()
+
+        timestamp = " ".join(tokens[0:2]) if len(tokens) >= 2 else None
+        user = "unknown"
+        process = "warning"
+
+        for t in tokens:
+            if t.startswith("user="):
+                user = t.split("=", 1)[1]
+
+        return {
+            "timestamp": timestamp,
+            "user": user,
+            "process": process,
+            "parent": "system",
+            "path": "",
+            "action": "Warning",
+            "policy": " ".join(tokens[2:]),
+            "event_type": "warn",
+        }
+
+    # -------------------------
+    # DEFAULT CSV-STYLE PARSING
+    # -------------------------
     parts = [p.strip() for p in line.split(",")]
+
     return {
         "timestamp": parts[0] if len(parts) > 0 else None,
         "user": parts[1] if len(parts) > 1 else "unknown",
@@ -441,6 +499,7 @@ def parse_log_line(line):
         "path": parts[4] if len(parts) > 4 else "",
         "action": parts[5] if len(parts) > 5 else "",
         "policy": parts[6] if len(parts) > 6 else "",
+        "event_type": "execution",
     }
 
 # =========================
@@ -648,4 +707,5 @@ if __name__ == "__main__":
 
     print(Fore.BLUE + Style.BRIGHT + "\n=== Threat Hunter Engine Initialized ===\n")
     process_log(sys.argv[1])
+
 
