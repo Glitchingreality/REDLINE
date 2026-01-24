@@ -31,27 +31,10 @@ TIMELINE = defaultdict(list)
 # UI SETUP
 # -------------------------
 st.set_page_config(page_title="Redline Threat Hunter", layout="wide")
+st.title("❗Redline❗ Threat Hunting Engine")
 st.markdown(
-    """
-    <h1 style='text-align:center; font-size:48px; color:white;'>
-        <span style='color:white; text-decoration: line-through red;'>REDLINE❗ Threat Hunting Engine</span>
-        <span style='font-size:16px; vertical-align: super;' title="Developed by Chance Bowers">ℹ️</span>
-    </h1>
-    """,
-    unsafe_allow_html=True
+    "Analyze log files for suspicious activity using execution chains, LOLBIN detection, and behavioral correlation."
 )
-
-
-
-st.markdown(
-    """
-    <div style='text-align:center;'>
-        Analyze log files for suspicious activity using execution chains, LOLBIN detection, and behavioral correlation.
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
 
 # -------------------------
 # GLOBAL CONTROLS
@@ -61,12 +44,12 @@ st.markdown("### Timeline Controls")
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
-    if st.button("🔽 Expand All"):
+    if st.button("🔼 Expand All"):
         st.session_state.expand_all = True
         st.session_state.collapse_all = False
 
 with c2:
-    if st.button("🔼 Collapse All"):
+    if st.button("🔽 Collapse All"):
         st.session_state.collapse_all = True
         st.session_state.expand_all = False
 
@@ -79,7 +62,7 @@ with c3:
 
 with c4:
     st.session_state.show_red = st.toggle(
-        "🔴 Red Line",
+        "🔴 Redlines",
         value=st.session_state.show_red,
         help="Toggle high-risk escalation activity",
     )
@@ -95,15 +78,8 @@ uploaded_file = st.file_uploader("Upload a log file", type=["csv", "txt"])
 if uploaded_file:
     raw_lines = uploaded_file.read().decode("utf-8").splitlines()
 
-    processed = 0
-
     for line in raw_lines:
         context = parse_log_line(line)
-
-        # 🚨 Skip INFO / WARN / non-execution lines
-        if context.get("event_type") in ("info", "warn"):
-            continue
-
         score, findings = analyze_line(line, context)
 
         TIMELINE[context["user"]].append(
@@ -121,9 +97,7 @@ if uploaded_file:
             }
         )
 
-        processed += 1
-
-    st.success(f"✅ Processed {processed} execution events")
+    st.success(f"✅ Processed {len(raw_lines)} log lines")
 
 # -------------------------
 # TIMELINE RENDER
@@ -196,7 +170,6 @@ if TIMELINE:
     st.sidebar.metric("Users", len(TIMELINE))
     st.sidebar.metric("Total Events", total_events)
     st.sidebar.metric("High-Risk Events", high_risk)
-    
 
 # -------------------------
 # DOWNLOAD REPORT
@@ -221,19 +194,3 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
