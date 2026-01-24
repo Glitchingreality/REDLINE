@@ -440,11 +440,9 @@ def parse_log_line(line):
     line = line.strip()
 
     # -------------------------
-    # STEP 2: HANDLE INFO / WARN LINES
+    # INFO LINES
     # -------------------------
     if line.startswith("[INFO]"):
-        # Example:
-        # [INFO] time=2026-01-22T08:51:09 user=alice proc=powershell.exe parent=cmd.exe verdict=Blocked reason=EncodedCommand
         fields = dict(
             item.split("=", 1)
             for item in line.replace("[INFO]", "").strip().split()
@@ -462,14 +460,14 @@ def parse_log_line(line):
             "event_type": "info",
         }
 
+    # -------------------------
+    # WARN LINES
+    # -------------------------
     if line.startswith("[WARN]"):
-        # Example:
-        # [WARN] 2026-01-22 08:52:11 user=dave mshta remote execution attempt blocked
         tokens = line.replace("[WARN]", "").strip().split()
 
         timestamp = " ".join(tokens[0:2]) if len(tokens) >= 2 else None
         user = "unknown"
-        process = "warning"
 
         for t in tokens:
             if t.startswith("user="):
@@ -478,13 +476,29 @@ def parse_log_line(line):
         return {
             "timestamp": timestamp,
             "user": user,
-            "process": process,
+            "process": "warning",
             "parent": "system",
             "path": "",
             "action": "Warning",
             "policy": " ".join(tokens[2:]),
             "event_type": "warn",
         }
+
+    # -------------------------
+    # DEFAULT EXECUTION LOGS
+    # -------------------------
+    parts = [p.strip() for p in line.split(",")]
+
+    return {
+        "timestamp": parts[0] if len(parts) > 0 else None,
+        "user": parts[1] if len(parts) > 1 else "unknown",
+        "process": parts[2] if len(parts) > 2 else "unknown",
+        "parent": parts[3] if len(parts) > 3 else "unknown",
+        "path": parts[4] if len(parts) > 4 else "",
+        "action": parts[5] if len(parts) > 5 else "",
+        "policy": parts[6] if len(parts) > 6 else "",
+        "event_type": "execution",
+    }
 
     # -------------------------
     # DEFAULT CSV-STYLE PARSING
@@ -707,5 +721,6 @@ if __name__ == "__main__":
 
     print(Fore.BLUE + Style.BRIGHT + "\n=== Threat Hunter Engine Initialized ===\n")
     process_log(sys.argv[1])
+
 
 
