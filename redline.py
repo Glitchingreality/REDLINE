@@ -313,24 +313,37 @@ def process_log(file_path):
             if not line:
                 continue
 
-            # Parse every line
+            # -------------------------
+            # Parse the line first
+            # -------------------------
             context = parse_log_line(line)
+
+            # -------------------------
+            # Analyze the line
+            # -------------------------
             score, findings = analyze_line(line, context)
             recommendation = threatlocker_recommendation(score, findings)
             explanation = explain_decision(score, findings, context)
             color = severity_color(score)
 
+            # -------------------------
+            # Append directly to TIMELINE using parsed context
+            # -------------------------
             TIMELINE[context["user"]].append({
-                "time": parse_timestamp(context["timestamp"]),
-                "process": context["process"],
-                "parent": context["parent"],
-                "action": context["action"],
-                "path": context["path"],
+                "time": parse_timestamp(context.get("timestamp")),
+                "process": context.get("process"),
+                "parent": context.get("parent"),
+                "action": context.get("action"),
+                "path": context.get("path"),
                 "score": score,
                 "findings": findings,
-                "policy": context["policy"],
+                "policy": context.get("policy"),
+                "event_type": context.get("event_type"),
             })
 
+            # -------------------------
+            # CLI output
+            # -------------------------
             print(color + f"[Line {lineno}] Score={score} | Recommendation: {recommendation}")
             print(color + f"  {line}")
             print(color + f"    Reason: {explanation}")
@@ -338,9 +351,13 @@ def process_log(file_path):
                 print(color + f"    → {f}")
             print()
 
+    # -------------------------
+    # Print timeline per user
+    # -------------------------
     for user in TIMELINE:
         if any(e["score"] >= 5 for e in TIMELINE[user]):
             print_timeline(user)
+
 
 # =========================
 # ENTRY POINT
@@ -353,3 +370,4 @@ if __name__ == "__main__":
 
     print(Fore.BLUE + Style.BRIGHT + "\n=== Threat Hunter Engine Initialized ===\n")
     process_log(sys.argv[1])
+
