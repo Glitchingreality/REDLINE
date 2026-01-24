@@ -35,7 +35,15 @@ st.markdown(
     <h1 style='text-align:center; font-size:48px; color:white;'>
         <span style='color:white; text-decoration: line-through red;'>REDLINE❗ Threat Hunting Engine</span>
         <span style='font-size:16px; vertical-align: super;' title="Developed by Chance Bowers">ℹ️</span>
-    </h1>
+    </h1>st.markdown(
+    """
+    <div style='text-align:center;'>
+        Analyze log files for suspicious activity using execution chains, LOLBIN detection, and behavioral correlation.
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
     """,
     unsafe_allow_html=True
 )
@@ -200,6 +208,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
