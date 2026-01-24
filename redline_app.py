@@ -95,8 +95,15 @@ uploaded_file = st.file_uploader("Upload a log file", type=["csv", "txt"])
 if uploaded_file:
     raw_lines = uploaded_file.read().decode("utf-8").splitlines()
 
+    processed = 0
+
     for line in raw_lines:
         context = parse_log_line(line)
+
+        # 🚨 Skip INFO / WARN / non-execution lines
+        if context.get("event_type") in ("info", "warn"):
+            continue
+
         score, findings = analyze_line(line, context)
 
         TIMELINE[context["user"]].append(
@@ -114,7 +121,9 @@ if uploaded_file:
             }
         )
 
-    st.success(f"✅ Processed {len(raw_lines)} log lines")
+        processed += 1
+
+    st.success(f"✅ Processed {processed} execution events")
 
 # -------------------------
 # TIMELINE RENDER
@@ -212,6 +221,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
