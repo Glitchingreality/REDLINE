@@ -82,7 +82,7 @@ with c3:
 
 with c4:
     st.session_state.show_red = st.toggle(
-        "🔴 Redlines",
+        "🔴 Red Line",
         value=st.session_state.show_red,
         help="Toggle high-risk escalation activity",
     )
@@ -214,6 +214,7 @@ if TIMELINE:
         file_name="redline_analysis.csv",
         mime="text/csv",
     )
+
 
 
 
